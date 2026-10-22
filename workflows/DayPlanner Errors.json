@@ -1,0 +1,68 @@
+{
+  "name": "DayPlanner Errors",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1cdae68c-bd58-4f30-be7c-943921c731ba",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "8615982436",
+        "text": "={{ $json.workflow.name }} failed: {{ $json.execution.error.message }}\n{{ $json.execution.url }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a686ee40-b4ed-4116-8a6a-6e5e9f101fd1",
+      "name": "Alert me",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        0
+      ],
+      "webhookId": "df0714d2-3d2c-425c-9e4d-48533dd10f61",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "telegramApi": {
+          "id": "mOjoaDkiIdQpnKU8",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Alert me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "636eb455-1bb8-499d-ac1a-42855fa20fec",
+  "meta": {
+    "instanceId": "b788706bdfe4d5d236c9389b18cb36185cf4deeb43fddcf2bb13c47821722fa0"
+  },
+  "nodeGroups": [],
+  "id": "Jtew6e43S7pWi9nB",
+  "tags": []
+}
