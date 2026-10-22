@@ -1,0 +1,1365 @@
+{
+  "name": "DayPlanner",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "d085ee07-e497-4792-8171-1f9e7587cf23",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1776,
+        464
+      ],
+      "webhookId": "3df6f2bc-4093-438b-b13c-9fe262b88f25",
+      "credentials": {
+        "telegramApi": {
+          "id": "mOjoaDkiIdQpnKU8",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/day",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    },
+                    "id": "3ba3db7c-6784-4689-94ca-3dcb5aaecdd7"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "day"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/history",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    },
+                    "id": "96cf082d-68bc-4231-bead-5b82bb8bf4fe"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "history"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f92ebdc1-f0b1-4b74-b5a8-4ac95f4ea9b9",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/tomorrow",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "tomorrow"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "other"
+        }
+      },
+      "id": "6c9b2881-e1b0-4be2-a253-e24e5e22c8f6",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1568,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $input.first().json.message;\nconst words = (msg.text || '').trim().split(/\\s+/);\nconst command = words[0].toLowerCase();\nconst parts = words.slice(1);\nconst flags = ['rain', 'fair', 'heat'];\nlet flag = null;\nif (parts.length && flags.includes(parts[parts.length - 1].toLowerCase())) {\n  flag = parts.pop().toLowerCase();\n}\nconst day = command.startsWith('/tomorrow') ? 1 : 0;\nreturn [{ json: { chat_id: msg.chat.id, city: parts.join(' '), flag, day } }];"
+      },
+      "id": "657a6d7e-61a4-448e-9458-9615c9703f01",
+      "name": "Read city",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "da59a463-13c8-4126-8c1b-4cb69cda8dc0",
+              "leftValue": "={{ $json.city }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2b9589e0-7d19-49de-b571-e62589f69427",
+      "name": "City given?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1104,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "Send /day followed by a city, for example /day Paris",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "9ed29504-3d26-4332-a96a-b8e0a1f4ad0d",
+      "name": "Usage reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        432
+      ],
+      "webhookId": "4042207b-6b53-42f1-a472-5ee2a7ef3a32",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "telegramApi": {
+          "id": "mOjoaDkiIdQpnKU8",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ykbsLIOHWi8hKNnP",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/ykbsLIOHWi8hKNnP",
+          "cachedResultName": "Get City Context"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "city": "={{ $json.city }}",
+            "day": "={{ $json.day }}"
+          },
+          "matchingColumns": [
+            "city"
+          ],
+          "schema": [
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "day",
+              "displayName": "day",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "d6b7c116-44f7-4a3c-a75c-c1c65741d14f",
+      "name": "Get City Context",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "76b5c390-1e1e-485d-89d5-8d406ef05eeb",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "109dec32-ebe2-4200-9112-bae977d2c5e9",
+      "name": "Context ok?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -656,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Read city').first().json.chat_id }}",
+        "text": "={{ $json.status === 'not_found' ? 'City not found, check the spelling.' : 'The weather service is not answering, try again in a minute.' }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "c734c0f9-7cb0-4ad0-956a-1a68b8e1de53",
+      "name": "Context error reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -448,
+        384
+      ],
+      "webhookId": "67d7056a-3e45-4c57-87bb-5a31ac45b617",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "telegramApi": {
+          "id": "mOjoaDkiIdQpnKU8",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $('Read city').first().json;\nconst c = $input.first().json;\nlet weather;\nif (req.flag) {\n  weather = req.flag;\n  c.rain_prob = weather === 'rain' ? 80 : c.rain_prob;\n  c.tmax = weather === 'heat' ? 35 : c.tmax;\n}\nelse if (c.rain_prob >= 50) weather = 'rain';\nelse if (c.tmax >= 32) weather = 'heat';\nelse weather = 'fair';\nreturn [{ json: { ...c, chat_id: req.chat_id, weather } }];"
+      },
+      "id": "1464448b-9306-4cae-9e1b-433b41f850a5",
+      "name": "Classify weather",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.weather }}",
+                    "rightValue": "rain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "336300f7-9d83-4032-ab86-906d06a262bc"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "rain"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.weather }}",
+                    "rightValue": "fair",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1356ec91-209a-437e-b347-e69913f977a1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "fair"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.weather }}",
+                    "rightValue": "heat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f20ebbd9-822b-4047-bbce-03172732accd"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "heat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "09262641-3888-4896-bc18-edd29ffdd98b",
+      "name": "Weather Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -224,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4e735819-f5a9-416a-9742-93aa934572a7",
+              "name": "kinds",
+              "value": "museums,theatres_and_entertainments,religion",
+              "type": "string"
+            },
+            {
+              "id": "38e95093-fe6d-47c8-a82a-0e8356dec77f",
+              "name": "style",
+              "value": "Rainy day: favour covered places and vary them, for example a museum, a famous covered market or shopping mall, a theatre or cultural centre, and an iconic building to see quickly between showers.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "7ba2444c-df88-4649-8aca-677230bfbc46",
+      "name": "Rain",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94199ac2-4ae4-4cc3-adac-8453bf74c0b1",
+              "name": "kinds",
+              "value": "interesting_places,amusements",
+              "type": "string"
+            },
+            {
+              "id": "51528e3b-b15f-4884-8b89-3e1dcaaae9f3",
+              "name": "style",
+              "value": "Good weather: outdoor places and variety, for example a landmark, a park or seafront, a lively square, a famous avenue or shopping street, an open-air market and a fun activity.",
+              "type": "string"
+            },
+            {
+              "id": "f0a1e0c6-3198-42a0-87af-d94b6f3f7a1a",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "67d732f7-5022-4997-9eb0-708f7ab022c0",
+      "name": "Fair",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "80796298-4c39-423d-89a0-778eceb981d0",
+              "name": "kinds",
+              "value": "museums,architecture,malls,interesting_places",
+              "type": "string"
+            },
+            {
+              "id": "dea286d3-f4a6-42f6-acd7-e2381c569bb6",
+              "name": "style",
+              "value": "Hot day: indoor places at midday (museums, shopping malls, cultural centres), outdoor visits only in the early morning and the evening (landmarks, seafront, gardens).",
+              "type": "string"
+            },
+            {
+              "id": "c2c16fdf-5b88-43b0-a35d-99a7ad14b0af",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "6ad0f112-ae4c-48ae-8669-6e1e456e9fee",
+      "name": "Heat",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nreturn [{ json: { ...c, radius: c.radius || 5000 } }];"
+      },
+      "id": "58746955-f8e7-49f6-a96f-696a83f1ca18",
+      "name": "Prepare request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.opentripmap.com/0.1/en/places/radius",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "radius",
+              "value": "={{ $json.radius }}"
+            },
+            {
+              "name": "lon",
+              "value": "={{ $json.lon }}"
+            },
+            {
+              "name": "lat",
+              "value": "={{ $json.lat }}"
+            },
+            {
+              "name": "kinds",
+              "value": "={{ $json.kinds }}"
+            },
+            {
+              "name": "rate",
+              "value": "3"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4c4b2073-31fe-4888-9e0b-a91fbdff13da",
+      "name": "Fetch places",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        160
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "FbFPjAp8kIhvLrMp",
+          "name": "Query Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Prepare request').last().json;\nconst banned = ['foods', 'accomodations', 'banks', 'transport', 'industrial_facilities', 'burial_places'];\nconst groups = ['museums', 'theatres_and_entertainments', 'malls', 'amusements', 'natural', 'architecture', 'historic', 'cultural', 'urban_environment'];\n// Religious places detected by category OR by name\nconst relRe = /church|cathedral|mosque|synagogue|chapel|basilica|temple|abbey|monastery|shrine|jewish|eglise|église|cathédrale|mosquée|notre[- ]dame|zaouia/i;\nconst caps = { religion: 1 };   // only 1 religious candidate\nconst defaultCap = 4;           // 4 places maximum per other type\nconst seen = new Set();\nconst count = {};\n\nconst sorted = $input.all().map(i => i.json)\n  .filter(p => p.name && p.name.trim().length > 3)\n  .filter(p => !/^\\d/.test(p.name))\n  .filter(p => {\n    const k = p.kinds || '';\n    if (banned.some(b => k.includes(b))) return false;\n    if (k.includes('shops') && !k.includes('malls')) return false;\n    return true;\n  })\n  .filter(p => { const k = p.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })\n  .sort((a, b) => ((Number(b.rate) || 0) - (Number(a.rate) || 0)) || ((b.wikidata ? 1 : 0) - (a.wikidata ? 1 : 0)));\n\nconst places = [];\nfor (const p of sorted) {\n  const k = p.kinds || '';\n  const g = (k.includes('religion') || relRe.test(p.name)) ? 'religion' : (groups.find(x => k.includes(x)) || 'other');\n  const cap = caps[g] ?? defaultCap;\n  if ((count[g] || 0) >= cap) continue;\n  count[g] = (count[g] || 0) + 1;\n  places.push({ name: p.name, type: g.replace(/_/g, ' ') });\n  if (places.length >= 20) break;\n}\n\nreturn [{ json: { ...ctx, places, count: places.length } }];"
+      },
+      "id": "d5d667c8-1348-4116-b02d-a22224929776",
+      "name": "Filter & rank",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3cd64bf8-928c-4682-93c0-3d2c4c7d00e8",
+              "leftValue": "={{ $json.count >= 4 || $json.radius >= 10000 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a3f7071e-8c9a-4e68-9c63-2896cc4b7677",
+      "name": "Enough places?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0949e1d7-a247-440b-9ed8-1749762ac09c",
+              "name": "radius",
+              "value": 10000,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c9a6bfed-adc2-4749-ae4a-2a4470c9986e",
+      "name": "Widen radius",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Plan a day in {{ $json.city }}, {{ $json.country }} for {{ $json.day == 1 ? 'tomorrow' : 'today' }} ({{ new Date($json.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}).\n\nWeather: {{ $json.weather }}, maximum {{ $json.tmax }}°C, {{ $json.rain_prob }}% chance of rain.\nAdvice: {{ $json.style }}\n\nCandidate places (name and type):\n{{ $json.places.map(p => '- ' + p.name + ' (' + p.type + ')').join('\\n') }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "/no_think Answer directly. Do not think step by step and do not explain your reasoning.  You are a friendly local travel guide who writes one-day city plans for a Telegram bot.  Rules: - Pick 4 to 6 places from the candidate list given by the user, preferring the best-known and easiest to reach. - You may add at most 2 extra spots, and ONLY if they are a world-famous neighbourhood, avenue, old town or seafront of the city that you are certain exists. Never add a building, market, mall, museum, theatre, restaurant or venue that is not in the list. - Follow the weather advice given by the user. - Variety is essential: mix different types (museum, landmark, shopping, neighbourhood or walk, entertainment). Religious places (churches, cathedrals, mosques, synagogues, temples, museums about a religion) count together: at most 1 in the whole plan. - Never give a raw percentage. Describe the weather in plain words and say what it means for the visitor.  Use exactly this structure, with each section title alone on its own line, no emoji, no markdown, no HTML, no asterisks:  Weather Two sentences: the weather in plain words and how the day is organised around it.  Morning Two or three fluent sentences presenting 1 or 2 places: what it is and why it is worth it.  Afternoon Same as morning.  Evening Same as morning.  Tip One practical sentence (transport, clothing, timing or booking).  Keep it between 150 and 200 words. Always answer in English, using the English names of places when they exist. Do not mention the places you leave out and do not add any note about how you chose them."
+            }
+          ]
+        }
+      },
+      "id": "a2a6ea72-7d7f-4fa0-8698-c5a7a278bdc5",
+      "name": "Compose day plan",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        32
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": "openrouter/free",
+        "options": {}
+      },
+      "id": "52a82abf-0ed9-4bdf-9437-fcdf93177210",
+      "name": "OpenRouter Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        224
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "PsAtQzXUOw8to5tG",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Filter & rank').last().json;\nconst list = ctx.places.slice(0, 8).map(p => '- ' + p.name).join('\\n');\nreturn [{ json: {\n  text: `Today in ${ctx.city} (${ctx.weather}, max ${ctx.tmax}°C). Suggested places:\\n${list}`,\n  status: 'fallback'\n}}];"
+      },
+      "id": "a4eb34fc-4025-40c0-8014-22ccbcb92a5b",
+      "name": "Fallback plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Filter & rank').last().json;\nlet raw = String($input.first().json.text || '');\nconst esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst icons = {\n  weather: { rain: '\\u{1F327}\\u{FE0F}', heat: '\\u{1F321}\\u{FE0F}', fair: '\\u{1F324}\\u{FE0F}' }[ctx.weather] || '\\u{1F324}\\u{FE0F}',\n  morning: '\\u{1F305}',\n  afternoon: '\\u{2600}\\u{FE0F}',\n  evening: '\\u{1F319}',\n  tip: '\\u{1F4A1}'\n};\nconst header = w => `\\n<b>${icons[w]} ${w[0].toUpperCase() + w.slice(1)}</b>`;\nconst wordOf = line => line.replace(/<[^>]*>/g, '').replace(/[^A-Za-z]/g, '').toLowerCase();\n\n// Remove any reasoning written before the plan: keep from the LAST \"Weather\" title line\nraw = raw.replace(/<think>[\\s\\S]*?<\\/think>/gi, '');\nlet rawLines = raw.split('\\n');\nlet start = -1;\nrawLines.forEach((l, i) => {\n  if (wordOf(l) === 'weather' || /^[^A-Za-z]*weather\\s*:/i.test(l.trim())) start = i;\n});\nif (start > 0) rawLines = rawLines.slice(start);\n\n// Title: \"Your day in Paris\" + \"Today/Tomorrow, Friday 23 October\"\nconst when = ctx.day == 1 ? 'Tomorrow' : 'Today';\nconst dateTxt = ctx.date ? new Date(ctx.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '';\nconst title = `<b>\\u{1F4CD} Your day in ${esc(ctx.city)}</b>\\n<i>${when}${dateTxt ? ', ' + dateTxt : ''}</i>`;\n\nlet found = 0;\nconst lines = rawLines.map(line => {\n  const clean = line.replace(/<[^>]*>/g, '').replace(/[*#_]/g, '').trim();\n  const word = wordOf(clean).replace(/^tips$/, 'tip');\n  if (icons[word]) { found++; return header(word); }\n  const m = clean.match(/^[^A-Za-z]*(weather|morning|afternoon|evening|tips?)\\s*:\\s*(.+)$/i);\n  if (m) { const w = m[1].toLowerCase().replace(/^tips$/, 'tip'); found++; return header(w) + '\\n' + esc(m[2]); }\n  return esc(clean);\n});\n\nlet plan = title + '\\n\\n' + lines.join('\\n').replace(/\\n{3,}/g, '\\n\\n').trim();\nlet status = 'ok';\n\n// Fallback if the AI answer is broken, too short or too long for Telegram (4096 max)\nif (found < 4 || plan.length < 250 || plan.length > 3800) {\n  const label = { rain: 'Rainy day, favour indoor visits', heat: 'Hot day, stay indoors at midday', fair: 'Nice weather, enjoy the outdoors' }[ctx.weather] || 'Plan';\n  // Pick places type by type (one museum, one landmark, one park...), no religious place, 6 max\n  const pool = (ctx.places || []).filter(p => p.type !== 'religion');\n  const byType = {};\n  pool.forEach(p => { (byType[p.type] = byType[p.type] || []).push(p); });\n  const groups = Object.values(byType);\n  const picked = [];\n  for (let round = 0; picked.length < 6 && groups.some(g => g.length > round); round++) {\n    for (const g of groups) { if (g[round] && picked.length < 6) picked.push(g[round]); }\n  }\n  const list = picked.map(p => '• ' + esc(p.name)).join('\\n') || 'No places found nearby.';\n  plan = `${title}\\n\\n${label}, up to ${ctx.tmax}°C.\\nOur AI guide is busy right now, so here are the top places to visit today:\\n\\n<b>Suggested places</b>\\n${list}`;\n  status = 'fallback';\n}\n\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  chat_id: ctx.chat_id,\n  city: ctx.city,\n  country: ctx.country,\n  weather: ctx.weather,\n  tmax: ctx.tmax,\n  rain_prob: ctx.rain_prob,\n  places_count: ctx.count,\n  plan,\n  status\n} }];"
+      },
+      "id": "7d983913-46eb-4fde-8f7c-0de47f224670",
+      "name": "Final reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Prepare request').last().json;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  chat_id: ctx.chat_id,\n  city: ctx.city,\n  country: ctx.country,\n  weather: ctx.weather,\n  tmax: ctx.tmax,\n  rain_prob: ctx.rain_prob,\n  places_count: 0,\n  plan: 'The places service is not answering, try again in a minute.',\n  status: 'error'\n}}];"
+      },
+      "id": "4572c06e-0e24-48f5-bf30-83b4966fce7a",
+      "name": "Places error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1o83TOnlfUJ6A09Q9ijp44gIqyh7tZmerWSZVJm33-EI",
+          "mode": "list",
+          "cachedResultName": "DayPlanner",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o83TOnlfUJ6A09Q9ijp44gIqyh7tZmerWSZVJm33-EI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "requests",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o83TOnlfUJ6A09Q9ijp44gIqyh7tZmerWSZVJm33-EI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "weather",
+              "displayName": "weather",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tmax",
+              "displayName": "tmax",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rain_prob",
+              "displayName": "rain_prob",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "places_count",
+              "displayName": "places_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "plan",
+              "displayName": "plan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d95128a1-f804-4e04-94f9-c27a40ba0960",
+      "name": "Save request",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1872,
+        128
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QkngytxkQzAhyAjW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.plan }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "eba23ec3-27ac-4fc5-90ff-94a1c060ba13",
+      "name": "Send plan",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        128
+      ],
+      "webhookId": "4bc1b6e1-2fd0-41ac-ac4b-6e5c463634de",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "telegramApi": {
+          "id": "mOjoaDkiIdQpnKU8",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1o83TOnlfUJ6A09Q9ijp44gIqyh7tZmerWSZVJm33-EI",
+          "mode": "list",
+          "cachedResultName": "DayPlanner",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o83TOnlfUJ6A09Q9ijp44gIqyh7tZmerWSZVJm33-EI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "requests",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o83TOnlfUJ6A09Q9ijp44gIqyh7tZmerWSZVJm33-EI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "chat_id",
+              "lookupValue": "={{ $json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c33de9c9-88ed-4a67-b8dd-4661de6a3448",
+      "name": "Read history",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1328,
+        560
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QkngytxkQzAhyAjW",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $('Telegram Trigger').first().json.message.chat.id;\nconst rows = $input.all().map(i => i.json).filter(r => r.plan && r.status !== 'error');\nconst last = rows.slice(-5).reverse();\nconst text = last.length\n  ? 'Your last plans:\\n' + last.map(r => `${String(r.timestamp).slice(0, 10)}: ${r.city} (${r.weather})`).join('\\n')\n  : 'No plans yet. Try /day Paris';\nreturn [{ json: { chat_id: chatId, text } }];"
+      },
+      "id": "ba628cba-3bc4-4798-a0d7-9973c95bd2d0",
+      "name": "Format history",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "1546ba86-701b-4be2-a48d-6d47e740ab3c",
+      "name": "Send history",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        560
+      ],
+      "webhookId": "d90b91de-f1a4-4947-bff8-93922f2a5aeb",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "telegramApi": {
+          "id": "mOjoaDkiIdQpnKU8",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "Welcome to DayPlanner! Here is what I can do:  /day <city> : a weather-aware plan for today (e.g. /day Paris) /tomorrow <city> : a plan for tomorrow (e.g. /tomorrow Rome) /history : your last plans  Test option: add rain, fair or heat at the end to force the weather (e.g. /day Paris rain).",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "44cd2d38-c666-4e37-afc1-9d758c13d063",
+      "name": "Help reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1328,
+        768
+      ],
+      "webhookId": "0fbd3875-ca60-40fc-bd13-01bbdfdb777c",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "telegramApi": {
+          "id": "mOjoaDkiIdQpnKU8",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [
+          {
+            "node": "Read city",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read history",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read city",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Help reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read city": {
+      "main": [
+        [
+          {
+            "node": "City given?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "City given?": {
+      "main": [
+        [
+          {
+            "node": "Get City Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Usage reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get City Context": {
+      "main": [
+        [
+          {
+            "node": "Context ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context ok?": {
+      "main": [
+        [
+          {
+            "node": "Classify weather",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Context error reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify weather": {
+      "main": [
+        [
+          {
+            "node": "Weather Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weather Switch": {
+      "main": [
+        [
+          {
+            "node": "Rain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fair",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Heat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rain": {
+      "main": [
+        [
+          {
+            "node": "Prepare request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fair": {
+      "main": [
+        [
+          {
+            "node": "Prepare request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Heat": {
+      "main": [
+        [
+          {
+            "node": "Prepare request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Widen radius": {
+      "main": [
+        [
+          {
+            "node": "Prepare request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare request": {
+      "main": [
+        [
+          {
+            "node": "Fetch places",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch places": {
+      "main": [
+        [
+          {
+            "node": "Filter & rank",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Places error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & rank": {
+      "main": [
+        [
+          {
+            "node": "Enough places?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enough places?": {
+      "main": [
+        [
+          {
+            "node": "Compose day plan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Widen radius",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Compose day plan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose day plan": {
+      "main": [
+        [
+          {
+            "node": "Final reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback plan": {
+      "main": [
+        [
+          {
+            "node": "Final reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final reply": {
+      "main": [
+        [
+          {
+            "node": "Save request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Places error": {
+      "main": [
+        [
+          {
+            "node": "Save request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save request": {
+      "main": [
+        [
+          {
+            "node": "Send plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read history": {
+      "main": [
+        [
+          {
+            "node": "Format history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format history": {
+      "main": [
+        [
+          {
+            "node": "Send history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "Jtew6e43S7pWi9nB",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "6a468d21-8f94-45b8-81c1-9d01e136d8c2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b788706bdfe4d5d236c9389b18cb36185cf4deeb43fddcf2bb13c47821722fa0"
+  },
+  "nodeGroups": [],
+  "id": "pDyxB9rl7zG1r5D5",
+  "tags": []
+}
