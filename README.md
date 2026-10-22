@@ -19,15 +19,38 @@ DayPlanner is a Telegram bot built with n8n. You send it a city, and it replies 
 
 ## Repository
 
+- `docker-compose.yml`: self-hosted n8n with a Postgres database
+- `db/init.sql`: creates the `requests` log table on the first start
 - `workflows/`: the three n8n workflows (main bot, city and weather sub-workflow, error alert)
 - `docs/`: scoping document and screenshots
-- `.env.example`: the keys needed to run the project (no real values)
+- `.env.example`: the variables needed to run the project (no real values)
 
-## Setup
+## Run it with Docker
 
-1. Import the three workflows into n8n.
-2. Create the credentials listed in `.env.example` (Telegram, OpenRouter, OpenTripMap, Google Sheets).
-3. Publish the workflows and send `/day Paris` to the bot.
+Requirements: Docker Desktop.
+
+1. Clone the repository and create your `.env`:
+   ```
+   git clone https://github.com/AmineBenbachir/dayplanner-n8n.git
+   cd dayplanner-n8n
+   cp .env.example .env
+   ```
+2. Fill in `.env`: a database password and an encryption key (`openssl rand -hex 32`).
+3. Start everything:
+   ```
+   docker compose up -d
+   ```
+   Postgres starts first; n8n waits until the database healthcheck is green.
+4. Open http://localhost:5678, create the owner account, then import the three files from `workflows/` (sub-workflow and error workflow first).
+5. Create the credentials (Telegram, OpenRouter, OpenTripMap, Google Sheets) and publish the workflows.
+
+Data survives restarts thanks to the named volumes `n8n_data` and `postgres_data`:
+```
+docker compose down
+docker compose up -d
+```
+
+Telegram needs a public HTTPS address to reach n8n: start a tunnel (for example `cloudflared tunnel --url http://localhost:5678`) and put its address in `WEBHOOK_URL`.
 
 ## Test
 
