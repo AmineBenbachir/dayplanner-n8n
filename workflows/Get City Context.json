@@ -1,0 +1,392 @@
+{
+  "name": "Get City Context",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "city"
+            },
+            {
+              "name": "day",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "0cd889b0-2fb8-4116-93de-19692a64f3d4",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -864,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://geocoding-api.open-meteo.com/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.city }}"
+            },
+            {
+              "name": "count",
+              "value": "1"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e32e933c-245c-47e9-b852-1662630c2d07",
+      "name": "Geocode",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -640,
+        912
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0024d742-a686-4985-bf46-cd9be7764094",
+              "leftValue": "={{ ($json.results || []).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7c2c93d2-4f33-45f0-a817-663ed6f3b61e",
+      "name": "City found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "latitude",
+              "value": "={{ $json.results[0].latitude }}"
+            },
+            {
+              "name": "longitude",
+              "value": "={{ $json.results[0].longitude }}"
+            },
+            {
+              "name": "daily",
+              "value": "temperature_2m_max,precipitation_probability_max"
+            },
+            {
+              "name": "timezone",
+              "value": "auto"
+            },
+            {
+              "name": "forecast_days",
+              "value": "2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f00271f1-28cd-4168-8ae5-b983e7f19400",
+      "name": "Forecast",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        704
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// English search first; French search only if the English one found nothing\nconst en = $('Geocode').first().json.results;\nconst g = (en && en.length) ? en[0] : $('Geocode FR').first().json.results[0];\nconst d = $input.first().json.daily;\n// 0 = today, 1 = tomorrow\nconst day = Number($('When Executed by Another Workflow').first().json.day) === 1 ? 1 : 0;\nreturn [{ json: {\n  status: 'ok',\n  city: g.name,\n  country: g.country,\n  lat: g.latitude,\n  lon: g.longitude,\n  day,\n  date: d.time[day],\n  tmax: d.temperature_2m_max[day],\n  rain_prob: d.precipitation_probability_max[day] ?? 0\n}}];"
+      },
+      "id": "6a1d2598-5c44-4e01-9158-f49926f69bb4",
+      "name": "Build context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b21a426e-fe1b-49e3-b557-d06fc63fbd82",
+              "name": "status",
+              "value": "not_found",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fc5d1c20-b61a-47f7-a9f4-2b492dbc3112",
+      "name": "Not found",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6f1e70a4-5d9f-445c-9946-718aa8ace177",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "38d88b07-e31b-42d8-a060-04f2c542bdf8",
+      "name": "Service error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        1232
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://geocoding-api.open-meteo.com/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $('When Executed by Another Workflow').first().json.city }}"
+            },
+            {
+              "name": "count",
+              "value": "1"
+            },
+            {
+              "name": "language",
+              "value": "fr"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0dced738-d711-4751-9a4a-856d87b2c7fe",
+      "name": "Geocode FR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -160,
+        944
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "73875d69-0181-430a-aef5-3fb3f0d4b72d",
+              "leftValue": "={{ ($json.results || []).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "452dffb1-caec-4b01-8b2e-f061341b778a",
+      "name": "City found FR?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        944
+      ]
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "city": "Paris"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Geocode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geocode": {
+      "main": [
+        [
+          {
+            "node": "City found?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Service error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "City found?": {
+      "main": [
+        [
+          {
+            "node": "Forecast",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Geocode FR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Forecast": {
+      "main": [
+        [
+          {
+            "node": "Build context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Service error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geocode FR": {
+      "main": [
+        [
+          {
+            "node": "City found FR?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Service error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "City found FR?": {
+      "main": [
+        [
+          {
+            "node": "Forecast",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6cc39507-87ad-4b5e-87ec-02fc04aa3ecc",
+  "meta": {
+    "instanceId": "b788706bdfe4d5d236c9389b18cb36185cf4deeb43fddcf2bb13c47821722fa0"
+  },
+  "nodeGroups": [],
+  "id": "ykbsLIOHWi8hKNnP",
+  "tags": []
+}
