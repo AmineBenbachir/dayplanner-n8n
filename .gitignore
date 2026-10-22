@@ -1,0 +1,12 @@
+# Secrets
+.env
+*.env
+!.env.example
+
+# Local data and volumes
+n8n_data/
+.n8n/
+postgres_data/
+
+# System files
+.DS_Store
